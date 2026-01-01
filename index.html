@@ -14,9 +14,6 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <style>
 :root {
   --green: #0b6623;
@@ -213,7 +210,7 @@ function postBlinds(){
 function checkCall(i){
   if(i!==current) return;
   const p=players[i], need=highestBet-p.bet;
-  if(need>0 && p.stack===0) return; // can't call if no chips
+  if(need>0 && p.stack===0) return;
   const c=Math.min(need,p.stack);
   p.stack -= c; 
   p.bet += c; 
@@ -300,26 +297,51 @@ function render(){
     if (i === bigBlind()) tags += " <span class='badge'>BB</span>";
     if (p.allIn) tags += " <span class='badge'>ALL-IN</span>";
 
-    const isCurrent = i === current;
-    const need = highestBet - p.bet;
-    const canCheckCall = isCurrent && !p.folded && !p.allIn && (need <= p.stack);
+    const container = document.createElement("div");
+    container.className = `player ${i === current ? 'active' : ''} ${p.folded ? 'folded' : ''}`;
+    container.innerHTML = `<b>${p.name}</b>${tags}<br>Stack: $${p.stack} | Bet: $${p.bet}`;
 
-    d.innerHTML += `
-      <div class="player ${isCurrent ? 'active' : ''} ${p.folded ? 'folded' : ''}">
-        <b>${p.name}</b>${tags}<br>
-        Stack: $${p.stack} | Bet: $${p.bet}
-        ${!isCurrent || p.folded || p.allIn ? "" : `
-        <div class="row">
-          <button class="check" ${!canCheckCall ? "disabled" : ""} onclick="checkCall(${i})">Check/Call</button>
-          <button class="raise" onclick="raiseBet(${i})">Raise</button>
-          <button class="fold" onclick="fold(${i})">Fold</button>
-        </div>`}
-        <div class="row">
-          <button style="background:#555;color:white;width:100%;" onclick="removePlayer(${i})">Remove Player</button>
-        </div>
-      </div>`;
+    // Action buttons
+    if(i === current && !p.folded && !p.allIn){
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const need = highestBet - p.bet;
+
+      const checkBtn = document.createElement("button");
+      checkBtn.className = "check";
+      checkBtn.disabled = need > p.stack;
+      checkBtn.textContent = "Check/Call";
+      checkBtn.addEventListener("click", ()=>checkCall(i));
+
+      const raiseBtn = document.createElement("button");
+      raiseBtn.className = "raise";
+      raiseBtn.textContent = "Raise";
+      raiseBtn.addEventListener("click", ()=>raiseBet(i));
+
+      const foldBtn = document.createElement("button");
+      foldBtn.className = "fold";
+      foldBtn.textContent = "Fold";
+      foldBtn.addEventListener("click", ()=>fold(i));
+
+      row.append(checkBtn, raiseBtn, foldBtn);
+      container.appendChild(row);
+    }
+
+    // Remove button
+    const removeRow = document.createElement("div");
+    removeRow.className = "row";
+    const removeBtn = document.createElement("button");
+    removeBtn.style = "background:#555;color:white;width:100%";
+    removeBtn.textContent = "Remove Player";
+    removeBtn.addEventListener("click", ()=>removePlayer(i));
+    removeRow.appendChild(removeBtn);
+    container.appendChild(removeRow);
+
+    d.appendChild(container);
   });
 }
+
 render();
 </script>
 
