@@ -17,6 +17,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+<!-- iOS Splash Screens -->
+<link rel="apple-touch-startup-image" href="splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+
 <style>
 :root {
   --green: #0b6623;
@@ -145,7 +153,223 @@ button {
 
 <div id="profit" class="profit"></div>
 
-<!-- YOUR ORIGINAL SCRIPT GOES HERE (UNCHANGED) -->
+<script>
+let players = [];
+let pot = 0;
+let current = 0;
+let highestBet = 0;
+let dealer = 0;
+
+const streets = ["Pre-Flop", "Flop", "Turn", "River"];
+let streetIndex = 0;
+
+const SB = 5;
+const BB = 10;
+
+function addPlayer() {
+  const name = prompt("Player name:");
+  if (!name) return;
+
+  const buyIn = +prompt("Buy-in amount:");
+  if (!buyIn) return;
+
+  players.push({
+    name,
+    stack: buyIn,
+    buyIn,
+    bet: 0,
+    folded: false,
+    acted: false,
+    allIn: false
+  });
+
+  if (players.length === 2) startHand();
+  render();
+}
+
+function startHand() {
+  pot = 0;
+  streetIndex = 0;
+  highestBet = 0;
+
+  players.forEach(p => {
+    p.bet = 0;
+    p.folded = false;
+    p.acted = false;
+    p.allIn = false;
+  });
+
+  postBlinds();
+}
+
+function smallBlind() { return (dealer + 1) % players.length; }
+function bigBlind() { return (dealer + 2) % players.length; }
+
+function postBlinds() {
+  postBlind(smallBlind(), SB);
+  postBlind(bigBlind(), BB);
+  highestBet = BB;
+  current = (dealer + 3) % players.length;
+}
+
+function postBlind(i, amt) {
+  const p = players[i];
+  const blind = Math.min(amt, p.stack);
+  p.stack -= blind;
+  p.bet += blind;
+  pot += blind;
+  if (p.stack === 0) p.allIn = true;
+}
+
+function checkCall(i) {
+  if (i !== current) return;
+  const p = players[i];
+  const needed = highestBet - p.bet;
+  const call = Math.min(needed, p.stack);
+  p.stack -= call;
+  p.bet += call;
+  pot += call;
+  if (p.stack === 0) p.allIn = true;
+  p.acted = true;
+  nextTurn();
+}
+
+function raiseBet(i) {
+  if (i !== current) return;
+  const p = players[i];
+  let target = +prompt("Raise TO:");
+  if (!target || target <= highestBet) return;
+  const max = p.bet + p.stack;
+  if (target > max) target = max;
+  const diff = target - p.bet;
+  p.stack -= diff;
+  p.bet = target;
+  pot += diff;
+  highestBet = target;
+  if (p.stack === 0) p.allIn = true;
+  players.forEach(pl => pl.acted = false);
+  p.acted = true;
+  nextTurn();
+}
+
+function fold(i) {
+  if (i !== current) return;
+  players[i].folded = true;
+  players[i].acted = true;
+  nextTurn();
+}
+
+function nextTurn() {
+  if (bettingComplete()) {
+    advanceStreet();
+    return;
+  }
+  do {
+    current = (current + 1) % players.length;
+  } while (players[current].folded || players[current].allIn);
+  render();
+}
+
+function bettingComplete() {
+  return players.every(p =>
+    p.folded || p.allIn || (p.acted && p.bet === highestBet)
+  );
+}
+
+function advanceStreet() {
+  if (streetIndex < 3) {
+    streetIndex++;
+    resetBets();
+  }
+  render();
+}
+
+function resetBets() {
+  highestBet = 0;
+  players.forEach(p => {
+    p.bet = 0;
+    p.acted = false;
+  });
+  current = firstActive();
+}
+
+function firstActive() {
+  for (let i = 0; i < players.length; i++)
+    if (!players[i].folded && !players[i].allIn) return i;
+  return 0;
+}
+
+function awardPot() {
+  if (!pot) return;
+  const names = players.filter(p => !p.folded).map(p => p.name).join("\n");
+  const winner = prompt("Winner:\n" + names);
+  const p = players.find(x => x.name === winner);
+  if (!p) return;
+  p.stack += pot;
+  pot = 0;
+  nextHand();
+}
+
+function nextHand() {
+  dealer = (dealer + 1) % players.length;
+  startHand();
+  render();
+}
+
+function resetSession() {
+  if (!confirm("Reset entire session?")) return;
+  players = [];
+  pot = 0;
+  dealer = 0;
+  current = 0;
+  highestBet = 0;
+  streetIndex = 0;
+  document.getElementById("players").innerHTML = "";
+  document.getElementById("profit").innerHTML = "";
+  render();
+}
+
+function render() {
+  document.getElementById("street").textContent = streets[streetIndex];
+  document.getElementById("pot").textContent = "Pot: $" + pot;
+  const div = document.getElementById("players");
+  div.innerHTML = "";
+
+  players.forEach((p, i) => {
+    let tags = "";
+    if (i === dealer) tags += " <span class='badge'>D</span>";
+    if (i === smallBlind()) tags += " <span class='badge'>SB</span>";
+    if (i === bigBlind()) tags += " <span class='badge'>BB</span>";
+    if (p.allIn) tags += " <span class='badge'>ALL-IN</span>";
+
+    div.innerHTML += `
+      <div class="player ${i===current?'active':''} ${p.folded?'folded':''}">
+        <b>${p.name}</b>${tags}<br>
+        Stack: $${p.stack} | Bet: $${p.bet}
+        <div class="row">
+          <button class="check" onclick="checkCall(${i})">Check/Call</button>
+          <button class="raise" onclick="raiseBet(${i})">Raise</button>
+          <button class="fold" onclick="fold(${i})">Fold</button>
+        </div>
+      </div>`;
+  });
+
+  renderProfit();
+}
+
+function renderProfit() {
+  let html = "<h3>Session Profit</h3>";
+  players.forEach(p => {
+    const profit = p.stack - p.buyIn;
+    html += `<div class="${profit>=0?'positive':'negative'}">
+      ${p.name}: ${profit>=0?'+':''}$${profit}
+    </div>`;
+  });
+  document.getElementById("profit").innerHTML = html;
+}
+
+render();
+</script>
 
 <script>
 if ('serviceWorker' in navigator) {
