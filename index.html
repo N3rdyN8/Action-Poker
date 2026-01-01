@@ -17,14 +17,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- iOS Splash Screens -->
-<link rel="apple-touch-startup-image" href="splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
-<link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-
 <style>
 :root {
   --green: #0b6623;
@@ -187,6 +179,17 @@ function addPlayer(){
   render();
 }
 
+function removePlayer(i){
+  players.splice(i,1);
+  if(players.length === 0){
+    resetSession();
+    return;
+  }
+  if(dealer >= players.length) dealer = 0;
+  if(current >= players.length) current = 0;
+  render();
+}
+
 function startHand(){
   pot=0; streetIndex=0; highestBet=0;
   players.forEach(p=>{p.bet=0;p.folded=false;p.acted=false;p.allIn=false;});
@@ -285,39 +288,39 @@ function resetSession(){
 }
 
 function render(){
-  document.getElementById("street").textContent=streets[streetIndex];
-  document.getElementById("pot").textContent="Pot: $"+pot;
-  const d=document.getElementById("players"); d.innerHTML="";
-  players.forEach((p,i)=>{
-    let tags="";
-    if(i===dealer) tags+=" <span class='badge'>D</span>";
-    if(i===smallBlind()) tags+=" <span class='badge'>SB</span>";
-    if(i===bigBlind()) tags+=" <span class='badge'>BB</span>";
-    if(p.allIn) tags+=" <span class='badge'>ALL-IN</span>";
+  document.getElementById("street").textContent = streets[streetIndex];
+  document.getElementById("pot").textContent = "Pot: $" + pot;
+  const d = document.getElementById("players");
+  d.innerHTML = "";
 
+  players.forEach((p, i) => {
+    let tags = "";
+    if (i === dealer) tags += " <span class='badge'>D</span>";
+    if (i === smallBlind()) tags += " <span class='badge'>SB</span>";
+    if (i === bigBlind()) tags += " <span class='badge'>BB</span>";
+    if (p.allIn) tags += " <span class='badge'>ALL-IN</span>";
+
+    const isCurrent = i === current;
     const need = highestBet - p.bet;
-    const canCheckCall = !p.folded && !p.allIn && (need <= p.stack);
+    const canCheckCall = isCurrent && !p.folded && !p.allIn && (need <= p.stack);
 
-    d.innerHTML+=`
-    <div class="player ${i===current?'active':''} ${p.folded?'folded':''}">
-      <b>${p.name}</b>${tags}<br>
-      Stack: $${p.stack} | Bet: $${p.bet}
-      ${p.folded||p.allIn?"":`
-      <div class="row">
-        <button class="check" ${!canCheckCall?"disabled":""} onclick="checkCall(${i})">Check/Call</button>
-        <button class="raise" onclick="raiseBet(${i})">Raise</button>
-        <button class="fold" onclick="fold(${i})">Fold</button>
-      </div>`}
-    </div>`;
+    d.innerHTML += `
+      <div class="player ${isCurrent ? 'active' : ''} ${p.folded ? 'folded' : ''}">
+        <b>${p.name}</b>${tags}<br>
+        Stack: $${p.stack} | Bet: $${p.bet}
+        ${!isCurrent || p.folded || p.allIn ? "" : `
+        <div class="row">
+          <button class="check" ${!canCheckCall ? "disabled" : ""} onclick="checkCall(${i})">Check/Call</button>
+          <button class="raise" onclick="raiseBet(${i})">Raise</button>
+          <button class="fold" onclick="fold(${i})">Fold</button>
+        </div>`}
+        <div class="row">
+          <button style="background:#555;color:white;width:100%;" onclick="removePlayer(${i})">Remove Player</button>
+        </div>
+      </div>`;
   });
 }
 render();
-</script>
-
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js');
-}
 </script>
 
 </body>
