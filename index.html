@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
 <title>Action Poker</title>
-
 <style>
 :root {
   --green: #0b6623;
@@ -14,7 +12,6 @@
   --red: #e53935;
   --orange: #fb8c00;
 }
-
 body {
   background: radial-gradient(circle at top, #138a3a, var(--green));
   font-family: system-ui, sans-serif;
@@ -22,114 +19,49 @@ body {
   padding: 12px;
   margin: 0;
 }
-
-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-header img {
-  width: 32px;
-  height: 32px;
-}
-
-h1 { margin: 0; font-size: 22px; }
-
-#street { text-align: center; font-size: 18px; }
-
+header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+header img { width:32px; height:32px; }
+h1 { margin:0; font-size:22px; }
+#street { text-align:center; font-size:18px; }
 #pot {
   background: linear-gradient(#ffd54f, var(--gold));
   color: black;
-  text-align: center;
-  font-size: 22px;
-  padding: 12px;
-  border-radius: 14px;
-  margin: 10px 0;
-  font-weight: bold;
+  text-align:center;
+  font-size:22px;
+  padding:12px;
+  border-radius:14px;
+  margin:10px 0;
+  font-weight:bold;
   transition: transform 0.2s ease;
 }
-
 #pot.bump { transform: scale(1.08); }
-
 .player {
-  background: white;
-  color: black;
-  padding: 12px;
-  border-radius: 14px;
-  margin-bottom: 10px;
+  background:white;
+  color:black;
+  padding:12px;
+  border-radius:14px;
+  margin-bottom:10px;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
-
-.active {
-  outline: 3px solid var(--blue);
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(33,150,243,0.6); }
-  70%  { box-shadow: 0 0 0 8px rgba(33,150,243,0); }
-  100% { box-shadow: 0 0 0 0 rgba(33,150,243,0); }
-}
-
-.folded {
-  opacity: 0.45;
-  transform: scale(0.98);
-  text-decoration: line-through;
-}
-
-.badge {
-  background: black;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 11px;
-  margin-left: 4px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-button {
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.check { background: #9e9e9e; color: white; }
-.raise { background: var(--orange); color: white; }
-.fold  { background: var(--red); color: white; }
-
-.add, .reset {
-  width: 100%;
-  background: black;
-  color: white;
-  margin-top: 8px;
-}
-
-.profit { text-align: center; margin-top: 12px; }
+.active { outline: 3px solid var(--blue); animation: pulse 1.2s infinite; }
+@keyframes pulse { 0% {box-shadow:0 0 0 0 rgba(33,150,243,0.6);} 70% {box-shadow:0 0 0 8px rgba(33,150,243,0);} 100% {box-shadow:0 0 0 0 rgba(33,150,243,0);} }
+.folded { opacity:0.45; transform:scale(0.98); text-decoration:line-through; }
+.badge { background:black; color:white; padding:2px 6px; border-radius:6px; font-size:11px; margin-left:4px; }
+.row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:8px; }
+button { padding:12px; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; }
+button:disabled { opacity:0.4; cursor:not-allowed; }
+.check { background:#9e9e9e; color:white; }
+.raise { background:var(--orange); color:white; }
+.fold { background:var(--red); color:white; }
+.add, .reset { width:100%; background:black; color:white; margin-top:8px; }
+.profit { text-align:center; margin-top:12px; }
 </style>
 </head>
-
 <body>
 
 <header>
-  <img src="icon-192.png">
-  <h1>Action Poker</h1>
+<img src="icon-192.png">
+<h1>Action Poker</h1>
 </header>
 
 <button class="add" onclick="addPlayer()">➕ Add Player</button>
@@ -138,42 +70,34 @@ button:disabled {
 <div id="street">Pre-Flop</div>
 <div id="pot">Pot: $0</div>
 <div id="players"></div>
-
 <div id="profit" class="profit"></div>
 
 <script>
-let players=[], pot=0, current=0, highestBet=0, dealer=0;
-const streets=["Pre-Flop","Flop","Turn","River"];
-let streetIndex=0;
+let players = [], pot = 0, dealer = 0, current = 0, highestBet = 0, streetIndex = 0;
 const SB=5, BB=10;
+const streets=["Pre-Flop","Flop","Turn","River"];
 
 function vibrate(ms=30){ if(navigator.vibrate) navigator.vibrate(ms); }
-function bumpPot(){
-  const p=document.getElementById("pot");
-  p.classList.add("bump");
-  setTimeout(()=>p.classList.remove("bump"),200);
-}
+function bumpPot(){ const p=document.getElementById("pot"); p.classList.add("bump"); setTimeout(()=>p.classList.remove("bump"),200); }
 
 function smallBlind(){ return players.length===2?dealer:(dealer+1)%players.length; }
 function bigBlind(){ return players.length===2?(dealer+1)%players.length:(dealer+2)%players.length; }
 
 function addPlayer(){
-  const name=prompt("Player name:");
-  const buyIn=+prompt("Buy-in:");
+  const name=prompt("Player name:"), buyIn=+prompt("Buy-in:");
   if(!name||!buyIn) return;
   players.push({name,stack:buyIn,buyIn,bet:0,folded:false,acted:false,allIn:false});
-  if(players.length===2) startHand();
+  if(players.length>=2) startHand();
   render();
 }
 
-function removePlayer(i){
-  players.splice(i,1);
-  if(players.length === 0){
-    resetSession();
-    return;
-  }
-  if(dealer >= players.length) dealer = 0;
-  if(current >= players.length) current = 0;
+function removePlayer(p){
+  const idx = players.indexOf(p);
+  if(idx===-1) return;
+  players.splice(idx,1);
+  if(players.length===0) { resetSession(); return; }
+  if(dealer >= players.length) dealer=0;
+  if(current >= players.length) current=0;
   render();
 }
 
@@ -183,70 +107,29 @@ function startHand(){
   postBlinds();
 }
 
-function postBlind(i,amt){
-  const p=players[i], v=Math.min(amt,p.stack);
+function postBlind(i, amt){
+  const p=players[i], v=Math.min(amt, p.stack);
   p.stack-=v; p.bet+=v; pot+=v;
   if(p.stack===0) p.allIn=true;
   bumpPot(); vibrate();
 }
 
 function postBlinds(){
-  postBlind(smallBlind(),SB);
-  postBlind(bigBlind(),BB);
-  highestBet=BB;
-  current=players.length===2?dealer:(bigBlind()+1)%players.length;
-}
-
-function checkCall(i){
-  if(i!==current) return;
-  const p=players[i];
-  const need = highestBet - p.bet;
-  const callAmount = Math.min(need, p.stack);
-  p.stack -= callAmount;
-  p.bet += callAmount;
-  pot += callAmount;
-  if(p.stack===0) p.allIn=true;
-  p.acted=true;
-  if(callAmount>0){ bumpPot(); vibrate(); }
-  nextTurn();
-}
-
-function raiseBet(i){
-  if(i!==current) return;
-  const p=players[i];
-  let t = +prompt(`Raise TO (min ${Math.max(highestBet+1,p.bet+1)}):`);
-  if(t <= highestBet) return;
-  t = Math.min(t, p.bet + p.stack);
-  const d = t - p.bet;
-  p.stack -= d; p.bet = t; pot += d; highestBet = t;
-  if(p.stack===0) p.allIn=true;
-  players.forEach(x=>x.acted=false);
-  p.acted=true;
-  bumpPot(); vibrate(50);
-  nextTurn();
-}
-
-function fold(i){
-  if(i!==current) return;
-  players[i].folded = true;
-  players[i].acted = true;
-  vibrate(20);
-  nextTurn();
+  postBlind(smallBlind(), SB);
+  postBlind(bigBlind(), BB);
+  highestBet = BB;
+  current = players.length===2 ? dealer : (bigBlind()+1)%players.length;
 }
 
 function activePlayers(){ return players.filter(p=>!p.folded); }
-
-function bettingComplete(){
-  return players.every(p=>p.folded||p.allIn||(p.acted&&p.bet===highestBet));
-}
+function bettingComplete(){ return players.every(p=>p.folded||p.allIn||(p.acted && p.bet===highestBet)); }
 
 function nextTurn(){
   if(activePlayers().length===1){
-    activePlayers()[0].stack += pot;
-    pot=0; nextHand(); return;
+    activePlayers()[0].stack+=pot; pot=0; nextHand(); return;
   }
   if(bettingComplete()){ advanceStreet(); return; }
-  do { current = (current+1) % players.length; }
+  do { current = (current+1)%players.length; } 
   while(players[current].folded || players[current].allIn);
   render();
 }
@@ -258,74 +141,93 @@ function advanceStreet(){
 
 function resetBets(){
   highestBet=0;
-  players.forEach(p=>{p.bet=0;p.acted=false;});
-  current = (dealer+1) % players.length;
-  while(players[current].folded || players[current].allIn)
-    current = (current+1) % players.length;
+  players.forEach(p=>{p.bet=0; p.acted=false;});
+  current=(dealer+1)%players.length;
+  while(players[current].folded||players[current].allIn) current=(current+1)%players.length;
 }
 
-function nextHand(){
-  dealer = (dealer+1) % players.length;
-  startHand();
-  render();
+function nextHand(){ dealer=(dealer+1)%players.length; startHand(); render(); }
+function resetSession(){ players=[]; pot=0; dealer=0; current=0; highestBet=0; streetIndex=0; render(); }
+
+function checkCall(p){
+  if(p!==players[current]) return;
+  const need = highestBet - p.bet;
+  const callAmount = Math.min(need, p.stack);
+  p.stack -= callAmount;
+  p.bet += callAmount;
+  pot += callAmount;
+  if(p.stack===0) p.allIn=true;
+  p.acted=true;
+  if(callAmount>0){ bumpPot(); vibrate(); }
+  nextTurn();
 }
 
-function resetSession(){
-  players=[]; pot=0; dealer=0; current=0; highestBet=0; streetIndex=0;
-  render();
+function raiseBet(p){
+  if(p!==players[current]) return;
+  let minRaise = Math.max(highestBet+1, p.bet+1);
+  let t = +prompt(`Raise TO (min ${minRaise}):`);
+  if(t<minRaise) return;
+  t = Math.min(t, p.bet+p.stack);
+  const diff = t-p.bet;
+  p.stack -= diff; p.bet=t; pot+=diff; highestBet=t;
+  if(p.stack===0) p.allIn=true;
+  players.forEach(x=>x.acted=false);
+  p.acted=true;
+  bumpPot(); vibrate(50);
+  nextTurn();
+}
+
+function fold(p){
+  if(p!==players[current]) return;
+  p.folded=true; p.acted=true;
+  vibrate(20); nextTurn();
 }
 
 function render(){
   document.getElementById("street").textContent = streets[streetIndex];
-  document.getElementById("pot").textContent = "Pot: $" + pot;
+  document.getElementById("pot").textContent = "Pot: $"+pot;
   const d = document.getElementById("players");
-  d.innerHTML = "";
+  d.innerHTML="";
 
-  players.forEach((p, i)=>{
-    let tags = "";
-    if(i===dealer) tags += " <span class='badge'>D</span>";
-    if(i===smallBlind()) tags += " <span class='badge'>SB</span>";
-    if(i===bigBlind()) tags += " <span class='badge'>BB</span>";
-    if(p.allIn) tags += " <span class='badge'>ALL-IN</span>";
+  players.forEach(p=>{
+    let tags="";
+    if(p===players[dealer]) tags+=" <span class='badge'>D</span>";
+    if(p===players[smallBlind()]) tags+=" <span class='badge'>SB</span>";
+    if(p===players[bigBlind()]) tags+=" <span class='badge'>BB</span>";
+    if(p.allIn) tags+=" <span class='badge'>ALL-IN</span>";
 
-    const container = document.createElement("div");
-    container.className = `player ${i===current?'active':''} ${p.folded?'folded':''}`;
-    container.innerHTML = `<b>${p.name}</b>${tags}<br>Stack: $${p.stack} | Bet: $${p.bet}`;
+    const container=document.createElement("div");
+    container.className = `player ${p===players[current]?'active':''} ${p.folded?'folded':''}`;
+    container.innerHTML=`<b>${p.name}</b>${tags}<br>Stack: $${p.stack} | Bet: $${p.bet}`;
 
-    // Action buttons
-    if(i===current && !p.folded && !p.allIn){
-      const row = document.createElement("div");
-      row.className="row";
+    // Actions
+    if(p===players[current] && !p.folded && !p.allIn){
+      const row=document.createElement("div"); row.className="row";
 
-      const checkBtn = document.createElement("button");
+      const checkBtn=document.createElement("button");
       checkBtn.className="check";
-      checkBtn.textContent = p.bet===highestBet ? "Check" : "Call";
-      checkBtn.disabled = false;
-      checkBtn.addEventListener("click", ()=>checkCall(i));
+      checkBtn.textContent = (p.bet===highestBet) ? "Check" : "Call";
+      checkBtn.addEventListener("click", ()=>checkCall(p));
 
-      const raiseBtn = document.createElement("button");
-      raiseBtn.className="raise";
-      raiseBtn.textContent = "Raise";
-      raiseBtn.addEventListener("click", ()=>raiseBet(i));
+      const raiseBtn=document.createElement("button");
+      raiseBtn.className="raise"; raiseBtn.textContent="Raise";
+      raiseBtn.addEventListener("click", ()=>raiseBet(p));
 
-      const foldBtn = document.createElement("button");
-      foldBtn.className="fold";
-      foldBtn.textContent = "Fold";
-      foldBtn.addEventListener("click", ()=>fold(i));
+      const foldBtn=document.createElement("button");
+      foldBtn.className="fold"; foldBtn.textContent="Fold";
+      foldBtn.addEventListener("click", ()=>fold(p));
 
       row.append(checkBtn, raiseBtn, foldBtn);
       container.appendChild(row);
     }
 
-    // Remove button
-    const removeRow = document.createElement("div");
-    removeRow.className="row";
-    const removeBtn = document.createElement("button");
+    // Remove
+    const removeRow=document.createElement("div"); removeRow.className="row";
+    const removeBtn=document.createElement("button");
     removeBtn.style="background:#555;color:white;width:100%";
     removeBtn.textContent="Remove Player";
-    removeBtn.addEventListener("click", ()=>removePlayer(i));
-    removeRow.appendChild(removeBtn);
-    container.appendChild(removeRow);
+    removeBtn.addEventListener("click", ()=>removePlayer(p));
+    removeRow.appendChild(removeBtn); container.appendChild(removeRow);
 
     d.appendChild(container);
   });
