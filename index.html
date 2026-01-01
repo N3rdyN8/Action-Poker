@@ -210,9 +210,11 @@ function postBlinds(){
 function checkCall(i){
   if(i!==current) return;
   const p=players[i], need=highestBet-p.bet;
-  if(need>0&&p.stack===0) return;
+  if(need>0 && p.stack===0) return; // can't call if no chips
   const c=Math.min(need,p.stack);
-  p.stack-=c; p.bet+=c; pot+=c;
+  p.stack -= c; 
+  p.bet += c; 
+  pot += c;
   if(p.stack===0) p.allIn=true;
   p.acted=true;
   if(c>0){ bumpPot(); vibrate(); }
@@ -292,14 +294,17 @@ function render(){
     if(i===smallBlind()) tags+=" <span class='badge'>SB</span>";
     if(i===bigBlind()) tags+=" <span class='badge'>BB</span>";
     if(p.allIn) tags+=" <span class='badge'>ALL-IN</span>";
-    const canCheck=p.bet===highestBet;
+
+    const need = highestBet - p.bet;
+    const canCheckCall = !p.folded && !p.allIn && (need <= p.stack);
+
     d.innerHTML+=`
     <div class="player ${i===current?'active':''} ${p.folded?'folded':''}">
       <b>${p.name}</b>${tags}<br>
       Stack: $${p.stack} | Bet: $${p.bet}
       ${p.folded||p.allIn?"":`
       <div class="row">
-        <button class="check" ${!canCheck?"disabled":""} onclick="checkCall(${i})">Check/Call</button>
+        <button class="check" ${!canCheckCall?"disabled":""} onclick="checkCall(${i})">Check/Call</button>
         <button class="raise" onclick="raiseBet(${i})">Raise</button>
         <button class="fold" onclick="fold(${i})">Fold</button>
       </div>`}
@@ -310,7 +315,7 @@ render();
 </script>
 
 <script>
-if('serviceWorker'in navigator){
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js');
 }
 </script>
