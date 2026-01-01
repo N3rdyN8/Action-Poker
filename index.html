@@ -6,14 +6,6 @@
 
 <title>Action Poker</title>
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b6623">
-
-<!-- Icons -->
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-
 <style>
 :root {
   --green: #0b6623;
@@ -122,7 +114,7 @@ button:disabled {
 .raise { background: var(--orange); color: white; }
 .fold  { background: var(--red); color: white; }
 
-.add, .award, .next, .reset {
+.add, .reset {
   width: 100%;
   background: black;
   color: white;
@@ -130,8 +122,6 @@ button:disabled {
 }
 
 .profit { text-align: center; margin-top: 12px; }
-.positive { color: #7CFF8A; }
-.negative { color: #FF6B6B; }
 </style>
 </head>
 
@@ -209,26 +199,26 @@ function postBlinds(){
 
 function checkCall(i){
   if(i!==current) return;
-  const p=players[i], need=highestBet-p.bet;
-  if(need>0 && p.stack===0) return;
-  const c=Math.min(need,p.stack);
-  p.stack -= c; 
-  p.bet += c; 
-  pot += c;
+  const p=players[i];
+  const need = highestBet - p.bet;
+  const callAmount = Math.min(need, p.stack);
+  p.stack -= callAmount;
+  p.bet += callAmount;
+  pot += callAmount;
   if(p.stack===0) p.allIn=true;
   p.acted=true;
-  if(c>0){ bumpPot(); vibrate(); }
+  if(callAmount>0){ bumpPot(); vibrate(); }
   nextTurn();
 }
 
 function raiseBet(i){
   if(i!==current) return;
   const p=players[i];
-  let t=+prompt("Raise TO:");
-  if(t<=highestBet) return;
-  t=Math.min(t,p.bet+p.stack);
-  const d=t-p.bet;
-  p.stack-=d; p.bet=t; pot+=d; highestBet=t;
+  let t = +prompt(`Raise TO (min ${Math.max(highestBet+1,p.bet+1)}):`);
+  if(t <= highestBet) return;
+  t = Math.min(t, p.bet + p.stack);
+  const d = t - p.bet;
+  p.stack -= d; p.bet = t; pot += d; highestBet = t;
   if(p.stack===0) p.allIn=true;
   players.forEach(x=>x.acted=false);
   p.acted=true;
@@ -238,8 +228,8 @@ function raiseBet(i){
 
 function fold(i){
   if(i!==current) return;
-  players[i].folded=true;
-  players[i].acted=true;
+  players[i].folded = true;
+  players[i].acted = true;
   vibrate(20);
   nextTurn();
 }
@@ -252,12 +242,12 @@ function bettingComplete(){
 
 function nextTurn(){
   if(activePlayers().length===1){
-    activePlayers()[0].stack+=pot;
+    activePlayers()[0].stack += pot;
     pot=0; nextHand(); return;
   }
   if(bettingComplete()){ advanceStreet(); return; }
-  do{ current=(current+1)%players.length; }
-  while(players[current].folded||players[current].allIn);
+  do { current = (current+1) % players.length; }
+  while(players[current].folded || players[current].allIn);
   render();
 }
 
@@ -269,14 +259,15 @@ function advanceStreet(){
 function resetBets(){
   highestBet=0;
   players.forEach(p=>{p.bet=0;p.acted=false;});
-  current=(dealer+1)%players.length;
-  while(players[current].folded||players[current].allIn)
-    current=(current+1)%players.length;
+  current = (dealer+1) % players.length;
+  while(players[current].folded || players[current].allIn)
+    current = (current+1) % players.length;
 }
 
 function nextHand(){
-  dealer=(dealer+1)%players.length;
-  startHand(); render();
+  dealer = (dealer+1) % players.length;
+  startHand();
+  render();
 }
 
 function resetSession(){
@@ -290,37 +281,35 @@ function render(){
   const d = document.getElementById("players");
   d.innerHTML = "";
 
-  players.forEach((p, i) => {
+  players.forEach((p, i)=>{
     let tags = "";
-    if (i === dealer) tags += " <span class='badge'>D</span>";
-    if (i === smallBlind()) tags += " <span class='badge'>SB</span>";
-    if (i === bigBlind()) tags += " <span class='badge'>BB</span>";
-    if (p.allIn) tags += " <span class='badge'>ALL-IN</span>";
+    if(i===dealer) tags += " <span class='badge'>D</span>";
+    if(i===smallBlind()) tags += " <span class='badge'>SB</span>";
+    if(i===bigBlind()) tags += " <span class='badge'>BB</span>";
+    if(p.allIn) tags += " <span class='badge'>ALL-IN</span>";
 
     const container = document.createElement("div");
-    container.className = `player ${i === current ? 'active' : ''} ${p.folded ? 'folded' : ''}`;
+    container.className = `player ${i===current?'active':''} ${p.folded?'folded':''}`;
     container.innerHTML = `<b>${p.name}</b>${tags}<br>Stack: $${p.stack} | Bet: $${p.bet}`;
 
     // Action buttons
-    if(i === current && !p.folded && !p.allIn){
+    if(i===current && !p.folded && !p.allIn){
       const row = document.createElement("div");
-      row.className = "row";
-
-      const need = highestBet - p.bet;
+      row.className="row";
 
       const checkBtn = document.createElement("button");
-      checkBtn.className = "check";
-      checkBtn.disabled = need > p.stack;
-      checkBtn.textContent = "Check/Call";
+      checkBtn.className="check";
+      checkBtn.textContent = p.bet===highestBet ? "Check" : "Call";
+      checkBtn.disabled = false;
       checkBtn.addEventListener("click", ()=>checkCall(i));
 
       const raiseBtn = document.createElement("button");
-      raiseBtn.className = "raise";
+      raiseBtn.className="raise";
       raiseBtn.textContent = "Raise";
       raiseBtn.addEventListener("click", ()=>raiseBet(i));
 
       const foldBtn = document.createElement("button");
-      foldBtn.className = "fold";
+      foldBtn.className="fold";
       foldBtn.textContent = "Fold";
       foldBtn.addEventListener("click", ()=>fold(i));
 
@@ -330,10 +319,10 @@ function render(){
 
     // Remove button
     const removeRow = document.createElement("div");
-    removeRow.className = "row";
+    removeRow.className="row";
     const removeBtn = document.createElement("button");
-    removeBtn.style = "background:#555;color:white;width:100%";
-    removeBtn.textContent = "Remove Player";
+    removeBtn.style="background:#555;color:white;width:100%";
+    removeBtn.textContent="Remove Player";
     removeBtn.addEventListener("click", ()=>removePlayer(i));
     removeRow.appendChild(removeBtn);
     container.appendChild(removeRow);
